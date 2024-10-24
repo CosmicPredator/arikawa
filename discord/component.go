@@ -858,7 +858,7 @@ type MentionableSelectComponent struct {
 	ValueLimits [2]int `json:"-"`
 	// Disabled disables the select if true.
 	Disabled bool `json:"disabled,omitempty"`
-	// DefaultMentions is the slice of discord.UserID's and discord.RoleID's 
+	// SelectedMentions is the slice of discord.UserID's and discord.RoleID's 
 	// that are marked as selected by default
 	SelectedMentions []interface{} `json:"-"`
 }
