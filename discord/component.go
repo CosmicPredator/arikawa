@@ -720,6 +720,8 @@ type UserSelectComponent struct {
 	ValueLimits [2]int `json:"-"`
 	// Disabled disables the select if true.
 	Disabled bool `json:"disabled,omitempty"`
+	// SelectedUsers is the slice of UserIDs that are marked as selected by default
+	SelectedUsers []UserID `json:"-"`
 }
 
 // ID implements the Component interface.
@@ -737,17 +739,33 @@ func (s *UserSelectComponent) _icp() {}
 func (s *UserSelectComponent) MarshalJSON() ([]byte, error) {
 	type sel UserSelectComponent
 
+	type DefaultValue struct {
+		Id UserID `json:"id"`
+		Type string `json:"type"`
+	}
+
 	type Msg struct {
 		Type ComponentType `json:"type"`
 		*sel
 		MinValues *int `json:"min_values,omitempty"`
 		MaxValues *int `json:"max_values,omitempty"`
+		DefaultValues []DefaultValue `json:"default_values,omitempty"`
 	}
 
 	msg := Msg{
 		Type: UserSelectComponentType,
 		sel:  (*sel)(s),
 	}
+
+	var defaultValues []DefaultValue
+
+	if len(s.SelectedUsers) > 0 {
+		for _, userId := range s.SelectedUsers {
+			defaultValues = append(defaultValues, DefaultValue{Id: userId, Type: "user"})
+		}
+	}
+
+	msg.DefaultValues = defaultValues
 
 	if s.ValueLimits != [2]int{0, 0} {
 		msg.MinValues = new(int)
@@ -840,8 +858,9 @@ type MentionableSelectComponent struct {
 	ValueLimits [2]int `json:"-"`
 	// Disabled disables the select if true.
 	Disabled bool `json:"disabled,omitempty"`
-	// SelectedUsers is the slice of UserIDs that are marked as selected by default
-	SelectedUsers []UserID `json:"-"`
+	// DefaultMentions is the slice of discord.UserID's and discord.RoleID's 
+	// that are marked as selected by default
+	SelectedMentions []interface{} `json:"-"`
 }
 
 // ID implements the Component interface.
@@ -860,7 +879,7 @@ func (s *MentionableSelectComponent) MarshalJSON() ([]byte, error) {
 	type sel MentionableSelectComponent
 
 	type DefaultValue struct {
-		Id UserID `json:"id"`
+		Id Snowflake `json:"id"`
 		Type string `json:"type"`
 	}
 
@@ -879,9 +898,16 @@ func (s *MentionableSelectComponent) MarshalJSON() ([]byte, error) {
 
 	var defaultValues []DefaultValue
 
-	if len(s.SelectedUsers) > 0 {
-		for _, userId := range s.SelectedUsers {
-			defaultValues = append(defaultValues, DefaultValue{Id: userId, Type: "user"})
+	if len(s.SelectedMentions) > 0 {
+		for _, mentionId := range s.SelectedMentions {
+			switch id := mentionId.(type) {
+			case UserID:
+				defaultValues = 
+					append(defaultValues, DefaultValue{Id: Snowflake(id), Type: "user"})
+			case RoleID:
+				defaultValues = 
+					append(defaultValues, DefaultValue{Id: Snowflake(id), Type: "role"})
+			}
 		}
 	}
 
